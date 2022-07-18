@@ -1,0 +1,162 @@
+﻿@page "/GetEvents"
+
+
+@inject IJSRuntime JS
+@inject IHttpClientFactory _clientFactory
+@using Newtonsoft
+@using Newtonsoft.Json
+@using System.Text
+@using Newtonsoft.Json.Linq
+@using CalendlyBlazorAPI.Model
+@using System.Net
+
+
+<h3>GetEvents</h3>
+
+@*<p>Input start date </p>
+<input type="text" @bind-value=@submitevent.start placeholder="YYYY-MM-DD" />
+<br /><br />
+
+<p>Input end date </p>
+<input type="text" @bind-value=@submitevent.end placeholder="YYYY-MM-DD" />
+<br /><br />*@
+
+
+@*<button @onclick="GetEvent" >Submit</button>
+<p/>*@
+
+<link rel="stylesheet" type="text/css" href="/DataTables/datatables.css">
+ 
+
+
+
+<table id="myTable" class="table">
+
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Starts</th>
+            <th>Ends</th>
+            <th>Attendance</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+        
+    <tbody>
+         <tr>
+            <td>
+                @{
+                foreach(var responseCalendly in rootobject.collection)
+                    {
+                        @responseCalendly.name
+                        <br/>
+                    }
+                }
+            </td>
+
+             <td>
+                @{
+                foreach(var responseCalendly in rootobject.collection)
+                    {
+                        //DateTimeKind.Unspecified(@responseCalendly.start_time)
+                        //@responseCalendly.start_time 
+                        @TimeZoneInfo.ConvertTimeFromUtc(responseCalendly.start_time,TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"))
+                        <br/>
+                    }
+                }
+            </td>
+
+             <td>
+                @{
+                foreach(var responseCalendly in rootobject.collection)
+                    {
+                        @TimeZoneInfo.ConvertTimeFromUtc(responseCalendly.end_time,TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")) // Convert time from UTC to EST 
+                        <br/>
+                    }
+                }
+            </td>
+
+             <td>
+                @{
+                foreach(var responseCalendly in rootobject.collection)
+                    {
+                        @responseCalendly.invitees_counter.active
+                        <br/>
+                    }
+                }
+            </td>
+
+             <td>
+                @{
+                foreach(var responseCalendly in rootobject.collection)
+                    {
+                        @responseCalendly.location.location
+                        <br/>
+                    }
+                }
+            </td>
+
+        </tr>
+    </tbody>
+
+</table>
+
+@code {
+
+    SubmitEventModel submitevent = new SubmitEventModel();
+
+    Rootobject rootobject = new Rootobject();
+
+    int year = 2022;
+    int month = 0;
+    int monthsAway = 0;
+    DateTime monthEnd;
+
+
+    //main function---------------------------------------------------------------------------------------------------------------------------------------
+
+    protected override async Task OnInitializedAsync()
+    {
+     
+        await GetEvent();
+    }
+
+    private async Task GetEvent()
+    {
+
+        year = DateTime.Now.Year; //gets current year
+        month = DateTime.Now.Month + monthsAway; //gets month 
+
+        DateTime monthStart = new DateTime(year, month, 1); //where we want the calendar to start 
+        monthEnd = monthStart.AddMonths(1).AddDays(-1); //where we want the calendar to end
+
+        submitevent.start = string.Format("{0:yyyy-M-d}", monthStart); //formats the date into yyyy-mm-dd
+        submitevent.end = string.Format("{0:yyyy-M-d}", monthEnd);
+
+
+            var client = new HttpClient();
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(String.Format("https://api.calendly.com/scheduled_events?organization=https%3A%2F%2Fapi.calendly.com%2Forganizations%2FBEDBF3FGNB5FU22M&status=active&sort=start_time&min_start_time={0}&max_start_time={1}",submitevent.start,submitevent.end )),
+                Headers =
+                {
+                    { "Authorization", "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNjU3NjQwODc1LCJqdGkiOiI4OTUxOTkxNi00N2ViLTRjNDgtYTM4Zi0wNWJlNDYwOTRmMDUiLCJ1c2VyX3V1aWQiOiJFREZFQTRGR1BIQkhJNVQ3In0.mkdoUpYg6O9eUBgATN3VPOG5OvVCx17dZ8Q8g9LHAqgYr5IUEPKjFhlm4Okl6yGncvEur8sT31zAPKFc3ZcXXw" },
+                },
+            };
+            using (var response = await client.SendAsync(request))
+            {
+                response.EnsureSuccessStatusCode();
+                var body = await response.Content.ReadAsStringAsync();
+                //Console.WriteLine(body);
+
+                rootobject = Newtonsoft.Json.JsonConvert.DeserializeObject<Rootobject>(body);
+
+                
+
+
+
+            }
+        }
+
+}

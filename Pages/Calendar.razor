@@ -1,0 +1,156 @@
+﻿@page "/calendar"
+@using CalendlyBlazorAPI.Model
+@using Newtonsoft.Json
+@inject IHttpClientFactory _clientFactory
+
+<h3>Calendar</h3>
+
+@code {
+    string monthName = "";
+    DateTime monthEnd;
+    int numDummyColumn = 0;
+    int monthsAway = 0;
+    int year = 2022;
+    int month = 0;
+    List<CITEM> items1 = new List<CITEM>();
+    Rootobject rootobject = new Rootobject();
+
+
+
+    //main function---------------------------------------------------------------------------------------------------------------------------------------
+
+    protected override async Task OnInitializedAsync()
+    {
+     
+        await createMonth();
+    }
+
+
+
+    //function to get events ---------------------------------------------------------------------------------------------------------------------------------------
+
+    private async Task getEventsOfTheMonth(DateTime StartMonth, DateTime EndMonth)
+    {
+        
+
+        items1 = new List<CITEM>();
+        
+
+        string dtStart = string.Format("{0:yyyy-M-d}", StartMonth); //formats the date into yyyy-mm-dd
+        string dtEnd = string.Format("{0:yyyy-M-d}", EndMonth);
+
+        
+
+        var httpRequestMessage = new HttpRequestMessage
+        {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(String.Format("https://api.calendly.com/scheduled_events?organization=https%3A%2F%2Fapi.calendly.com%2Forganizations%2FBEDBF3FGNB5FU22M&status=active&sort=start_time&min_start_time={0}&max_start_time={1}", dtStart, dtEnd)),
+                Headers =
+                {
+                    { "Authorization", "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNjU3NjQwODc1LCJqdGkiOiI4OTUxOTkxNi00N2ViLTRjNDgtYTM4Zi0wNWJlNDYwOTRmMDUiLCJ1c2VyX3V1aWQiOiJFREZFQTRGR1BIQkhJNVQ3In0.mkdoUpYg6O9eUBgATN3VPOG5OvVCx17dZ8Q8g9LHAqgYr5IUEPKjFhlm4Okl6yGncvEur8sT31zAPKFc3ZcXXw" },
+                },
+        };
+
+        var httpClient = _clientFactory.CreateClient();
+
+        var httpResponseMessage = await httpClient.SendAsync(httpRequestMessage);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            rootobject = JsonConvert.DeserializeObject<Rootobject>(content);
+
+            if(rootobject.collection != null)
+            {
+                foreach(var i in rootobject.collection)
+                {
+                    items1.Add(new CITEM { Date = i.start_time, Name = i.name }); //adding items to the CITEM list 
+                }
+            }
+            
+        }
+
+    }
+
+
+
+    private async Task createMonth()
+    {
+
+        year = DateTime.Now.Year; //gets current year
+        month = DateTime.Now.Month + monthsAway; //gets month 
+
+
+        //logic to go backwards and forward in months 
+
+        year += (month - 1) / 12; //need to figure out how to go backwards can only go forwards with this logic
+        month = ((month - 1) % 12) + 1;
+
+
+
+        DateTime monthStart = new DateTime(year, month, 1); //where we want the calendar to start 
+        monthEnd = monthStart.AddMonths(1).AddDays(-1); //where we want the calendar to end
+        monthName = monthStart.Month switch
+        { //switch expression 
+            1 => "January",
+            2 => "February",
+            3 => "March",
+            4 => "April",
+            5 => "May",
+            6 => "June",
+            7 => "July",
+            8 => "August",
+            9 => "September",
+            10 => "October",
+            11 => "November",
+            12 => "December",
+            _ => "" //if not these months will give an empty string
+        };
+
+        numDummyColumn = (int)monthStart.DayOfWeek;
+
+        await getEventsOfTheMonth(monthStart, monthEnd);
+    }
+    
+    
+}
+
+
+
+    <button @onclick="async () => {monthsAway--; await createMonth();}">Previous Month</button>
+    <h1>@monthName, @year</h1>
+    <button @onclick="async () => {monthsAway++; await createMonth();}">Next Month</button>
+
+<section>
+
+    @for (int i = 1 ; i <= numDummyColumn; i++)
+    {
+        <div></div>
+    }
+
+    @for (int i = 1 ; i <= monthEnd.Day; i++)
+    {
+        var calendarItem = items1.FirstOrDefault(n => n.Date == new DateTime(year, month, i));
+        DateTime thatday = new DateTime(year, month, i);
+
+
+        <div>
+            <h2>@i</h2>
+           
+
+            @foreach(var x in items1)
+            {
+                @if (x.Date.Date == thatday)
+                {
+                    <p>@x.Name</p>
+                    @*<p>@x.Date.TimeOfDay</p>*@
+                    <p>@TimeZoneInfo.ConvertTimeFromUtc(x.Date,TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"))</p>
+                }
+            }
+
+            
+
+        </div>
+    }
+</section>
