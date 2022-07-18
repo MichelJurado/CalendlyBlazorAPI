@@ -141,7 +141,7 @@
                 RequestUri = new Uri(String.Format("https://api.calendly.com/scheduled_events?organization=https%3A%2F%2Fapi.calendly.com%2Forganizations%2FBEDBF3FGNB5FU22M&status=active&sort=start_time&min_start_time={0}&max_start_time={1}",submitevent.start,submitevent.end )),
                 Headers =
                 {
-                    { "Authorization", "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNjU3NjQwODc1LCJqdGkiOiI4OTUxOTkxNi00N2ViLTRjNDgtYTM4Zi0wNWJlNDYwOTRmMDUiLCJ1c2VyX3V1aWQiOiJFREZFQTRGR1BIQkhJNVQ3In0.mkdoUpYg6O9eUBgATN3VPOG5OvVCx17dZ8Q8g9LHAqgYr5IUEPKjFhlm4Okl6yGncvEur8sT31zAPKFc3ZcXXw" },
+                    { "Authorization", "Bearer (get your token from calendly and remove parenthesis)" },
                 },
             };
             using (var response = await client.SendAsync(request))
