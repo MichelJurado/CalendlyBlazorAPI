@@ -44,7 +44,7 @@
         var httpRequestMessage = new HttpRequestMessage
         {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(String.Format("https://api.calendly.com/scheduled_events?organization=https%3A%2F%2Fapi.calendly.com%2Forganizations%2FBEDBF3FGNB5FU22M&status=active&sort=start_time&min_start_time={0}&max_start_time={1}", dtStart, dtEnd)),
+                RequestUri = new Uri(String.Format("https://api.calendly.com/scheduled_events?organization=https%3AfddfFapi.calendly.com%2Forganizations%2FBEDBF3FGNB5FU22M&status=active&sort=start_time&min_start_time={0}&max_start_time={1}", dtStart, dtEnd)),
                 Headers =
                 {
                     { "Authorization", "Bearer (get token from calendly and remove ())" },
